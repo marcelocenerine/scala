@@ -13,7 +13,7 @@ package convert
 import java.{lang => jl, util => ju}
 import java.util.{concurrent => juc}
 import java.util.function.Predicate
-import java.lang.{IllegalStateException, Object, UnsupportedOperationException}
+import java.lang.{IllegalStateException, NullPointerException, Object, UnsupportedOperationException}
 
 import scala.collection.JavaConverters._
 import scala.language.higherKinds
@@ -391,6 +391,13 @@ private[collection] trait Wrappers {
       with concurrent.Map[A, B] {
 
     override def get(k: A) = Option(underlying get k)
+
+    override def getOrElseUpdate(key: A, op: => B): B =
+      underlying.computeIfAbsent(key, _ => {
+        val v = op
+        if (v == null) throw new NullPointerException()
+        v
+      })
 
     override def empty = new JConcurrentMapWrapper(new juc.ConcurrentHashMap[A, B])
 
